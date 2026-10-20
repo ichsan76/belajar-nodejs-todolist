@@ -1,3 +1,4 @@
+import fs from "node:fs/promises";
 
 //untuk terhuhung ke app.mjs
 export class TodoListService {
@@ -28,13 +29,13 @@ export class TodoListService {
     // menyimpannya ke variabel body
 
     //Memastikan todo berupa teks dan tidak kosong.
-    createTodo(request, response){
+    async createTodo(request, response){
         let data = ""; //menyiapkan tempat untuk mengumpulkan data dari request.
         request.on("data", (chunk) => {
           data += chunk.toString();//digunakan di backend untuk mengumpulkan potongan-potongan data (chunks) menjadi satu kesatuan utuh sebelum akhirnya diproses atau dikirim ke pengguna.
         });
 
-        request.on("end", () => {
+        request.on("end", async () => {
             try{
                 console.info(data); // Tambahkan untuk pemeriksaan
                 const body = JSON.parse(data);//parse untuk teks json ke objek javascript
@@ -58,6 +59,9 @@ export class TodoListService {
                 //digunakan pada tipe data String 
                 // untuk menghapus karakter spasi awal dan akhir.
                 this.todoList.push(body.todo.trim());
+                //Menunggu proses penyimpanan Todo ke file JSON selesai
+                //  sebelum melanjutkan.
+                await this.saveTodoList();
 
                 response.statusCode = 201;
                 response.write(this.getJsonTodoList());
@@ -76,13 +80,13 @@ export class TodoListService {
     }
 
     //Memastikan ID tersedia dan todo berupa teks yang tidak kosong.
-    updateTodo(request, response){
+    async updateTodo(request, response){
         let data = ""; //menyiapkan tempat untuk mengumpulkan data dari request.
       
         request.on("data", (chunk) => {
             data += chunk.toString();
         });
-        request.on("end", () => {
+        request.on("end", async () => {
             try{
                 const body = JSON.parse(data);//ubah JSON ke objek javascript
                 
@@ -124,6 +128,8 @@ export class TodoListService {
                 //  trim() menghapus spasi di awal dan akhir teks.
                 this.todoList[body.id] = body.todo.trim();
 
+                await this.saveTodoList();
+
                 response.statusCode = 200;
                 response.write(this.getJsonTodoList());
                 response.end();
@@ -140,7 +146,7 @@ export class TodoListService {
             
         });
     }
-    deleteTodo(request, response){
+    async deleteTodo(request, response){
         //Mengumpulkan data request
        let data = "";
 
@@ -148,7 +154,7 @@ export class TodoListService {
         data += chunk.toString();
        });
 
-       request.on("end", () => {
+       request.on("end", async () => {
         try{
             //Mengubah JSON menjadi objek
             const body = JSON.parse(data);
@@ -176,6 +182,8 @@ export class TodoListService {
             //splice menghapus data berdasarkan indeks.
             this.todoList.splice(body.id, 1);//Data "Zaman" dihapus dan indeks "Now" bergeser menjadi 1.
 
+            await this.saveTodoList();
+
             response.statusCode = 200;
             response.write(this.getJsonTodoList());
             response.end();
@@ -191,4 +199,38 @@ export class TodoListService {
 
        });
     }
+    async loadTodoList(){
+        try{
+            const data = await fs.readFile( //membaca berkas file
+                "./todo-list.json",
+                "utf-8" //membuat hasil bacaan berupa teks.
+            );
+            //Mengubah teks JSON menjadi array
+            this.todoList = JSON.parse(data);
+
+        }catch (error) {
+            //Menangani file yang belum ada.
+            //ENOENT berarti file atau path tidak ditemukan. Jika file belum ada, 
+            // fungsi akan membuatnya melalui saveTodoList(). Kesalahan lain tetap diteruskan agar tidak disembunyikan.
+            if (error.code !== "ENOENT") {
+                throw error;
+            }
+
+            await this.saveTodoList();
+        }
+    }
+
+    async saveTodoList(){
+        //Mengubah array menjadi teks JSON
+        const data = JSON.stringify(
+            this.todoList,
+            null,
+            2 //Angka 2 digunakan agar isi file memiliki indentasi dua spasi dan mudah dibaca.
+        );
+        //Menyimpan ke file
+        await fs.writeFile("./todo-list.json", data);
+    }
+
 }
+
+

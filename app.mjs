@@ -24,4 +24,8 @@ const server = http.createServer((request, response) => {
     }
 });
 
-server.listen(3003)
+await service.loadTodoList();
+
+server.listen(3003, () => {
+    console.info("Server berjalan di port 3003");
+});
