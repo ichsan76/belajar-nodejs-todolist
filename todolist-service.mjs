@@ -199,7 +199,7 @@ export class TodoListService {
 
        });
     }
-    async loadTodoList(){
+    async loadTodoList(){ //memuat/menampung TodoList
         try{
             const data = await fs.readFile( //membaca berkas file
                 "./todo-list.json",
@@ -215,19 +215,21 @@ export class TodoListService {
             if (error.code !== "ENOENT") {
                 throw error;
             }
-
+            // menunggu hingga proses penyimpanan data daftar tugas (todo list) selesai sebelum melanjutkan 
+            // ke baris kode berikutnya.
             await this.saveTodoList();
         }
     }
 
-    async saveTodoList(){
-        //Mengubah array menjadi teks JSON
+    async saveTodoList(){ //menyimpan TodoList
+        //menjadi string teks berformat JSON.
         const data = JSON.stringify(
             this.todoList,
-            null,
+            null, // tanpa ada yang disaring (difilter) atau diubah nilainya selama proses konversi.
             2 //Angka 2 digunakan agar isi file memiliki indentasi dua spasi dan mudah dibaca.
         );
-        //Menyimpan ke file
+        //Menyimpan ke file atau membuat file baru jika file todo-list.json sudah ada,
+        //isinya akan ditimpa (overwrite) dengan data yang baru.
         await fs.writeFile("./todo-list.json", data);
     }
 
