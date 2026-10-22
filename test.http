@@ -7,24 +7,20 @@ Content-Type: application/json
 Accept: application/json
 
 {
-    "todo": "Josjis"
+    "todo": "Yuk bisa yukk"
 }
 
 ###
-PUT http://localhost:3003
-Content-Type: application/application/json
-Accept: application/json
-
-{
-    "id" : 4,
-    "todo" : "Josssjisss"
-}
-
-###
-DELETE http://localhost:3003
+PUT http://localhost:3003/6
 Content-Type: application/json
 Accept: application/json
 
 {
-    "id" : 99
+    "todo" : "Josjis Javascript"
 }
+
+###
+DELETE http://localhost:3003/2
+Content-Type: application/json
+Accept: application/json
+
